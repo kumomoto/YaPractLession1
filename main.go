@@ -1,74 +1,88 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"yapractlession1/cmd"
 )
 
-var errCount int
-
 func main() {
 
-	var resp *http.Response
+	var errCount int
 
 	for {
-		resp, respErr := http.Get("srv.msk01.gigacorp.local/_stats")
+
+		resp, respErr := http.Get("http://srv.msk01.gigacorp.local/_stats")
 
 		if respErr != nil {
-			println(respErr)
-		}
-
-		ok := CheckContentType(resp)
-
-		if !ok {
-			if errCount >= 3 {
-				println("Unable to fetch server statistic")
-			} else {
-				errCount = errCount + 1
-				time.Sleep(time.Second * 60)
-				continue
-			}
+			fmt.Println(respErr)
 		}
 
 		if resp.StatusCode != 200 {
-			if errCount >= 3 {
-				println("Unable to fetch server statistic")
+			if errCount > 3 {
+				fmt.Println("Unable to fetch server statistic")
+				continue
 			} else {
-				errCount = errCount + 1
-				time.Sleep(time.Second * 60)
+				errCount += 1
 				continue
 			}
+		} else {
+			body, err := io.ReadAll(resp.Body)
+			resp.Body.Close()
+
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			metrics, bodyErr := parseBody(body)
+
+			if bodyErr != nil {
+				if errCount > 3 {
+					fmt.Println("Unable to fetch server statistic")
+					continue
+				} else {
+					errCount += 1
+					continue
+				}
+			} else {
+				cmd.GetLaDesicions(metrics[0])
+				cmd.GetRAMDesicions(metrics[1], metrics[2])
+				cmd.GetDiskDesicions(metrics[3], metrics[4])
+				cmd.GetNetworkDesicions(metrics[5], metrics[6])
+			}
+
 		}
 
+		time.Sleep(5 * time.Second)
+
 	}
-
-	body, bodyErr := io.ReadAll(resp.Body)
-	resp.Body.Close()
-
-	if bodyErr != nil {
-		println(bodyErr)
-	}
-
-	currentSysProp := cmd.InitSystemProp(body)
-
-	println(currentSysProp)
 
 }
 
-func CheckContentType(resp *http.Response) bool {
+func parseBody(body []byte) ([]int, error) {
+	var err error = nil
 
-	var answer bool
+	bodyString := string(body)
 
-	contentType := resp.Header.Get("Content-Type")
+	bodyString = strings.Trim(bodyString, "\n")
 
-	if strings.Compare(contentType, "text/html; charset=utf-8") == 0 {
-		answer = true
-	} else {
-		answer = false
+	bodySlice := strings.Split(bodyString, ",")
+
+	values := []int{}
+
+	for _, body := range bodySlice {
+		item, convertErr := strconv.Atoi(strings.Trim(body, " "))
+
+		values = append(values, item)
+
+		if convertErr != nil {
+			err = convertErr
+			break
+		}
 	}
-
-	return answer
+	return values, err
 }
