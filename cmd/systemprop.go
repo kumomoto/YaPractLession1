@@ -11,7 +11,7 @@ func GetNetworkDesicions(netBandwith, netLoad int) {
 	var ans string = ""
 
 	if percent.PercentOf(netLoad, netBandwith) > 90 {
-		ans = fmt.Sprintf("Network bandwidth usage high: %v Mbit/s available", math.Trunc(((float64(netBandwith - netLoad)) / (1024 * 1024))))
+		ans = fmt.Sprintf("Network bandwidth usage high: %v Mbit/s available", math.Trunc(((float64(netBandwith - netLoad)) / 125000 / 8)))
 		fmt.Println(ans)
 	}
 }
@@ -31,7 +31,7 @@ func GetRAMDesicions(ram, resram int) {
 
 	perc := percent.PercentOf(resram, ram)
 
-	result := fmt.Sprintf("%.f", math.RoundToEven(perc))
+	result := fmt.Sprintf("%v", math.RoundToEven(perc))
 
 	if perc > 80 {
 		ans = fmt.Sprintf("Memory usage too high: " + result + "%%")
