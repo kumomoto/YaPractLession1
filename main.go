@@ -111,7 +111,7 @@ func GetRAMDesicions(ram, resram int) {
 	result := fmt.Sprintf("%.f", math.Trunc(perc))
 
 	if perc > 80 {
-		fmt.Println("Memory usage too high: " + result + "%%")
+		fmt.Println("Memory usage too high: " + result + "%")
 	}
 }
 
