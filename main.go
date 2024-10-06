@@ -17,7 +17,6 @@ func main() {
 	for {
 
 		resp, respErr := http.Get("http://srv.msk01.gigacorp.local/_stats")
-
 		if respErr != nil {
 			fmt.Println(respErr)
 		}
